@@ -1,0 +1,28 @@
+%macro myStat(var1,var2);
+ods trace on;
+proc freq data= class_merged;
+table &var1.*&var2.;
+run;
+ods trace off;
+ods output Freq.Table1.CrossTabFreqs = class_merged_1;
+proc freq data= class_merged;
+table &var1.*&var2.;
+run;
+ODS output off;
+data class_merged_2;
+set class_merged_1;
+where Missing not = 0 and not(RowPercent is null);
+obs_value = cat(Frequency, "(", round(Percent, .01), "%)" );
+drop Table  _Table_ RowPercent ColPercent Missing Frequency Percent _TYPE_;
+run;
+proc transpose data= class_merged_2 out= T_class_merged_2;
+var obs_value;
+id &var2.;
+by &var1.;
+run;
+proc print data= T_class_merged_2(drop=_NAME_);
+Title "Report of Frequency Table";
+run;
+%mend;
+
+%myStat(STATUS,gender);
